@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minhas Tarefas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #a0a09c;
+    --border: rgba(0,0,0,.1);
+    --border2: rgba(0,0,0,.18);
+    --border3: rgba(0,0,0,.25);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --teal: #1D9E75;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0efea;
+      --text2: #9a9a94;
+      --text3: #65655f;
+      --border: rgba(255,255,255,.1);
+      --border2: rgba(255,255,255,.16);
+      --border3: rgba(255,255,255,.24);
+    }
+  }
+
+  body { font-family: var(--font); background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; }
+
+  .app { max-width: 720px; margin: 0 auto; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; gap: 8px; flex-wrap: wrap; }
+  .app-title { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.4px; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .vtoggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+  .vbtn { background: none; border: none; padding: 6px 14px; font-size: 12px; cursor: pointer; color: var(--text2); font-family: var(--font); transition: all .15s; white-space: nowrap; }
+  .vbtn.active { background: var(--text); color: var(--bg); }
+  .btn-new { background: var(--teal); color: #fff; border: none; border-radius: var(--radius); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; transition: opacity .15s; }
+  .btn-new:hover { opacity: .85; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 1.25rem; }
+  .stat { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; border: 1px solid var(--border); }
+  .stat-n { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1; }
+  .stat-l { font-size: 11px; color: var(--text2); margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Tabs */
+  .tabs { display: flex; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .tab { background: none; border: none; font-size: 13px; color: var(--text2); padding: 7px 14px 11px; cursor: pointer; position: relative; font-family: var(--font); transition: color .15s; }
+  .tab.active { color: var(--text); font-weight: 600; }
+  .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--text); border-radius: 2px 2px 0 0; }
+
+  /* Task cards */
+  .task-card { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--border2); border-radius: var(--radius-lg); padding: 11px 12px; display: flex; gap: 10px; align-items: flex-start; transition: border-color .15s, opacity .2s; margin-bottom: 6px; }
+  .task-card.p1 { border-left-color: #E24B4A; }
+  .task-card.p2 { border-left-color: #EF9F27; }
+  .task-card.p3 { border-left-color: #378ADD; }
+  .task-card:hover { border-color: var(--border2); }
+  .task-card.done { opacity: .45; }
+
+  .chk { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .chk.on { background: var(--teal); border-color: var(--teal); }
+  .chk.on::after { content: ''; width: 4px; height: 7px; border: 1.5px solid #fff; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .task-card.done .task-title { text-decoration: line-through; color: var(--text3); }
+  .task-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+
+  .badge { font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .bp1 { background: #FCEBEB; color: #A32D2D; }
+  .bp2 { background: #FAEEDA; color: #854F0B; }
+  .bp3 { background: #E6F1FB; color: #185FA5; }
+  .bcat { background: var(--bg2); color: var(--text2); }
+  .brec { background: #EAF3DE; color: #3B6D11; }
+  .bdate { font-size: 11px; color: var(--text3); }
+  .bdate.ov { color: #A32D2D; }
+
+  .task-acts { display: flex; gap: 2px; flex-shrink: 0; }
+  .ibtn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 4px 7px; border-radius: 6px; line-height: 1; transition: all .15s; font-family: var(--font); }
+  .ibtn:hover { color: var(--text); background: var(--bg2); }
+
+  .empty { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 13px; }
+
+  /* Calendar */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .cal-title { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .cal-navs { display: flex; gap: 4px; }
+  .cnav { background: none; border: 1px solid var(--border2); border-radius: var(--radius); width: 32px; height: 32px; cursor: pointer; font-size: 15px; color: var(--text2); display: flex; align-items: center; justify-content: center; transition: all .15s; font-family: var(--font); }
+  .cnav:hover { background: var(--bg2); color: var(--text); }
+
+  .cal-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .cal-grid > * { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .cal-grid > *:nth-child(7n) { border-right: none; }
+  .cal-dow { background: var(--bg2); padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+  .cal-day { background: var(--bg); min-height: 80px; padding: 7px 6px; cursor: pointer; transition: background .1s; }
+  .cal-day:hover { background: var(--bg2); }
+  .cal-day.om .dn { color: var(--text3); }
+  .cal-day.sel { background: var(--bg3); }
+  .dn { font-size: 12px; font-weight: 600; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 4px; color: var(--text); }
+  .cal-day.tod .dn { background: var(--teal); color: #fff; }
+  .cal-pills { display: flex; flex-direction: column; gap: 2px; }
+  .cpill { font-size: 10px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; line-height: 1.4; }
+  .cp1 { background: #FCEBEB; color: #A32D2D; }
+  .cp2 { background: #FAEEDA; color: #854F0B; }
+  .cp3 { background: #E6F1FB; color: #185FA5; }
+  .cpill.cdone { opacity: .4; text-decoration: line-through; }
+  .cmore { font-size: 10px; color: var(--text3); padding: 1px 5px; }
+
+  .day-panel { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .dp-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+  .dp-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .btn-add-day { background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius); padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text2); font-family: var(--font); transition: all .15s; }
+  .btn-add-day:hover { border-color: var(--border3); color: var(--text); }
+  .dp-body { padding: 10px 12px; }
+
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+  .modal { background: var(--bg); border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 1.5rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 1.1rem; color: var(--text); }
+  .frow { margin-bottom: 10px; }
+  .flabel { font-size: 12px; color: var(--text2); margin-bottom: 4px; display: block; font-weight: 500; }
+  .frow input, .frow select { width: 100%; font-size: 14px; border: 1px solid var(--border2); border-radius: var(--radius); padding: 9px 11px; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; font-family: var(--font); }
+  .frow input:focus, .frow select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,.12); }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .wdays { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .wday { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text2); transition: all .15s; font-family: var(--font); }
+  .wday.sel { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .mfoot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; }
+  .btn-cancel { background: none; border: 1px solid var(--border2); border-radius: var(--radius); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--text2); font-family: var(--font); }
+  .btn-cancel:hover { border-color: var(--border3); color: var(--text); }
+  .btn-save { background: var(--teal); color: #fff; border: none; border-radius: var(--radius); padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: opacity .15s; }
+  .btn-save:hover { opacity: .88; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="app-title">Minhas tarefas</div>
+    <div class="header-right">
+      <div class="vtoggle">
+        <button class="vbtn active" onclick="setView('list',this)">≡ Lista</button>
+        <button class="vbtn" onclick="setView('cal',this)">⊞ Calendário</button>
+      </div>
+      <button class="btn-new" onclick="openModal(null)">+ Nova tarefa</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div id="list-view">
+    <div class="tabs">
+      <button class="tab active" onclick="setListTab('all',this)">Todas</button>
+      <button class="tab" onclick="setListTab('today',this)">Hoje</button>
+      <button class="tab" onclick="setListTab('pending',this)">Pendentes</button>
+      <button class="tab" onclick="setListTab('done',this)">Concluídas</button>
+    </div>
+    <div id="task-list"></div>
+  </div>
+
+  <div id="cal-view" style="display:none">
+    <div class="cal-header">
+      <div class="cal-title" id="cal-month-label"></div>
+      <div class="cal-navs">
+        <button class="cnav" onclick="navMonth(-1)">&#8249;</button>
+        <button class="cnav" onclick="navMonth(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="cal-wrap"><div class="cal-grid" id="cal-grid"></div></div>
+    <div id="day-panel" style="display:none"></div>
+  </div>
+</div>
+
+<div id="modal" style="display:none" class="overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nova tarefa</div>
+    <div class="frow">
+      <label class="flabel">Título</label>
+      <input id="f-title" type="text" placeholder="O que precisa ser feito?">
+    </div>
+    <div class="fgrid">
+      <div class="frow">
+        <label class="flabel">Data</label>
+        <input id="f-date" type="date">
+      </div>
+      <div class="frow">
+        <label class="flabel">Prioridade</label>
+        <select id="f-prio">
+          <option value="3">🔵 Baixa</option>
+          <option value="2" selected>🟡 Média</option>
+          <option value="1">🔴 Alta</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="frow">
+        <label class="flabel">Categoria</label>
+        <input id="f-cat" type="text" placeholder="Ex: Saúde, Trabalho…">
+      </div>
+      <div class="frow">
+        <label class="flabel">Recorrência</label>
+        <select id="f-rec" onchange="onRecChange()">
+          <option value="none">Sem recorrência</option>
+          <option value="daily">Diária</option>
+          <option value="weekly">Semanal</option>
+          <option value="monthly">Mensal</option>
+        </select>
+      </div>
+    </div>
+    <div id="week-days" style="display:none">
+      <div class="flabel">Dias da semana</div>
+      <div class="wdays">
+        <button class="wday" data-d="1" onclick="toggleWday(this)">Seg</button>
+        <button class="wday" data-d="2" onclick="toggleWday(this)">Ter</button>
+        <button class="wday" data-d="3" onclick="toggleWday(this)">Qua</button>
+        <button class="wday" data-d="4" onclick="toggleWday(this)">Qui</button>
+        <button class="wday" data-d="5" onclick="toggleWday(this)">Sex</button>
+        <button class="wday" data-d="6" onclick="toggleWday(this)">Sáb</button>
+        <button class="wday" data-d="0" onclick="toggleWday(this)">Dom</button>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTask()">Salvar tarefa</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK = 'tarefas-v1';
+let tasks = [], view = 'list', listTab = 'all', calYear, calMonth, selDay = null, editId = null;
+
+const now = new Date();
+calYear = now.getFullYear(); calMonth = now.getMonth();
+
+const today = () => new Date().toISOString().slice(0,10);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const esc = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTHS_S = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const pLabel = ['','Alta','Média','Baixa'];
+const pCls = ['','bp1','bp2','bp3'];
+const pCalCls = ['','cp1','cp2','cp3'];
+const recLabel = {daily:'Diária',weekly:'Semanal',monthly:'Mensal'};
+
+function fmtDate(ds) {
+  if (!ds) return '';
+  const td = today();
+  if (ds === td) return 'Hoje';
+  const y = new Date(); y.setDate(y.getDate()-1);
+  if (ds === y.toISOString().slice(0,10)) return 'Ontem';
+  const t = new Date(); t.setDate(t.getDate()+1);
+  if (ds === t.toISOString().slice(0,10)) return 'Amanhã';
+  const d = new Date(ds+'T12:00:00');
+  return `${d.getDate()} ${MONTHS_S[d.getMonth()]}`;
+}
+
+function nextOcc(tmpl, fromDate) {
+  const d = new Date(fromDate+'T12:00:00');
+  if (tmpl.rec==='daily') { d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+  if (tmpl.rec==='monthly') { d.setMonth(d.getMonth()+1); return d.toISOString().slice(0,10); }
+  if (tmpl.rec==='weekly') {
+    const days = (tmpl.recDays&&tmpl.recDays.length) ? tmpl.recDays.sort((a,b)=>a-b) : [d.getDay()];
+    let cur = d.getDay(), nxt = days.find(x=>x>cur);
+    if (nxt===undefined) nxt = days[0];
+    let diff = nxt-cur; if (diff<=0) diff+=7;
+    d.setDate(d.getDate()+diff); return d.toISOString().slice(0,10);
+  }
+  return fromDate;
+}
+
+function genRecurring() {
+  const td = today();
+  tasks.filter(t=>t.isTemplate).forEach(tmpl => {
+    const pending = tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&!t.done);
+    if (!pending.length) {
+      const lastDone = tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&t.done)
+        .sort((a,b)=>b.date>a.date?1:-1)[0];
+      const base = lastDone ? nextOcc(tmpl, lastDone.date) : (tmpl.date||td);
+      const nd = base < td ? td : base;
+      tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,done:false,templateId:tmpl.id});
+    }
+  });
+}
+
+function load() {
+  try { const raw = localStorage.getItem(SK); if (raw) tasks = JSON.parse(raw); } catch(e) { tasks = []; }
+  genRecurring(); renderAll();
+}
+
+function save() {
+  try { localStorage.setItem(SK, JSON.stringify(tasks)); } catch(e) {}
+}
+
+function renderAll() { renderStats(); view==='list' ? renderList() : renderCal(); }
+
+function renderStats() {
+  const td = today(), active = tasks.filter(t=>!t.isTemplate);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-n">${active.filter(t=>!t.done).length}</div><div class="stat-l">Pendentes</div></div>
+    <div class="stat"><div class="stat-n">${active.filter(t=>t.date===td&&!t.done).length}</div><div class="stat-l">Hoje</div></div>
+    <div class="stat"><div class="stat-n">${tasks.filter(t=>t.isTemplate).length}</div><div class="stat-l">Recorrentes</div></div>
+    <div class="stat"><div class="stat-n">${active.filter(t=>t.done).length}</div><div class="stat-l">Concluídas</div></div>`;
+}
+
+function setView(v, btn) {
+  view = v;
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('list-view').style.display = v==='list' ? 'block' : 'none';
+  document.getElementById('cal-view').style.display = v==='cal' ? 'block' : 'none';
+  if (v==='cal') renderCal();
+}
+
+function setListTab(t, el) {
+  listTab = t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active'); renderList();
+}
+
+function renderList() {
+  const td = today();
+  let vis = tasks.filter(t=>!t.isTemplate);
+  if (listTab==='today') vis = vis.filter(t=>t.date===td);
+  if (listTab==='pending') vis = vis.filter(t=>!t.done);
+  if (listTab==='done') vis = vis.filter(t=>t.done);
+  vis.sort((a,b) => {
+    if (a.done!==b.done) return a.done ? 1 : -1;
+    if ((a.date||'9') < (b.date||'9')) return -1;
+    if ((a.date||'9') > (b.date||'9')) return 1;
+    return (a.prio||2) - (b.prio||2);
+  });
+  const el = document.getElementById('task-list');
+  if (!vis.length) { el.innerHTML='<div class="empty">Nenhuma tarefa aqui</div>'; return; }
+  el.innerHTML = vis.map(t => {
+    const ov = !t.done && t.date && t.date < td;
+    const tmpl = t.templateId ? tasks.find(x=>x.id===t.templateId) : null;
+    const rt = tmpl ? tmpl.rec : t.rec;
+    return `<div class="task-card p${t.prio}${t.done?' done':''}">
+      <button class="chk${t.done?' on':''}" onclick="toggleDone('${t.id}')"></button>
+      <div class="task-body">
+        <div class="task-title">${esc(t.title)}</div>
+        <div class="task-meta">
+          ${t.date ? `<span class="badge bdate${ov?' ov':''}">${fmtDate(t.date)}</span>` : ''}
+          <span class="badge ${pCls[t.prio]}">${pLabel[t.prio]}</span>
+          ${t.cat ? `<span class="badge bcat">${esc(t.cat)}</span>` : ''}
+          ${rt&&rt!=='none' ? `<span class="badge brec">&#8635; ${recLabel[rt]||''}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-acts">
+        <button class="ibtn" onclick="editTask('${t.id}')">&#9998;</button>
+        <button class="ibtn" onclick="delTask('${t.id}')">&#10005;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCal() {
+  document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth]} ${calYear}`;
+  const td = today();
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth+1, 0);
+  const tbd = {};
+  tasks.filter(t=>!t.isTemplate&&t.date).forEach(t => { if (!tbd[t.date]) tbd[t.date]=[]; tbd[t.date].push(t); });
+  const startDow = first.getDay();
+  const cells = [];
+  for (let i=startDow-1; i>=0; i--) { const d=new Date(calYear,calMonth,-i); cells.push({date:d.toISOString().slice(0,10),day:d.getDate(),om:true}); }
+  for (let d=1; d<=last.getDate(); d++) { const dt=new Date(calYear,calMonth,d); cells.push({date:dt.toISOString().slice(0,10),day:d,om:false}); }
+  const rem = 42-cells.length;
+  for (let d=1; d<=rem; d++) { const dt=new Date(calYear,calMonth+1,d); cells.push({date:dt.toISOString().slice(0,10),day:d,om:true}); }
+  const dow = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  document.getElementById('cal-grid').innerHTML =
+    dow.map(d=>`<div class="cal-dow">${d}</div>`).join('') +
+    cells.map(c => {
+      const ct = tbd[c.date]||[], shown=ct.slice(0,2), more=ct.length-shown.length;
+      return `<div class="cal-day${c.om?' om':''}${c.date===td?' tod':''}${c.date===selDay?' sel':''}" onclick="selectDay('${c.date}')">
+        <div class="dn">${c.day}</div>
+        <div class="cal-pills">
+          ${shown.map(t=>`<div class="cpill ${pCalCls[t.prio]}${t.done?' cdone':''}">${esc(t.title)}</div>`).join('')}
+          ${more>0?`<div class="cmore">+${more}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  renderDayPanel();
+}
+
+function selectDay(date) { selDay = selDay===date ? null : date; renderCal(); }
+
+function renderDayPanel() {
+  const p = document.getElementById('day-panel');
+  if (!selDay) { p.style.display='none'; return; }
+  const dt = tasks.filter(t=>!t.isTemplate&&t.date===selDay);
+  const d = new Date(selDay+'T12:00:00');
+  const lbl = `${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+  p.style.display = 'block';
+  p.innerHTML = `<div class="dp-head"><div class="dp-title">${lbl}</div><button class="btn-add-day" onclick="openModal('${selDay}')">+ Adicionar</button></div>
+  <div class="dp-body">${!dt.length ? '<div class="empty" style="padding:1rem 0">Nenhuma tarefa neste dia</div>' :
+    dt.map(t => {
+      const tmpl = t.templateId ? tasks.find(x=>x.id===t.templateId) : null;
+      const rt = tmpl ? tmpl.rec : t.rec;
+      return `<div class="task-card p${t.prio}${t.done?' done':''}">
+        <button class="chk${t.done?' on':''}" onclick="toggleDone('${t.id}')"></button>
+        <div class="task-body">
+          <div class="task-title">${esc(t.title)}</div>
+          <div class="task-meta">
+            <span class="badge ${pCls[t.prio]}">${pLabel[t.prio]}</span>
+            ${t.cat?`<span class="badge bcat">${esc(t.cat)}</span>`:''}
+            ${rt&&rt!=='none'?`<span class="badge brec">&#8635; ${recLabel[rt]||''}</span>`:''}
+          </div>
+        </div>
+        <div class="task-acts">
+          <button class="ibtn" onclick="editTask('${t.id}')">&#9998;</button>
+          <button class="ibtn" onclick="delTask('${t.id}')">&#10005;</button>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function navMonth(dir) {
+  calMonth += dir;
+  if (calMonth>11) { calMonth=0; calYear++; }
+  if (calMonth<0) { calMonth=11; calYear--; }
+  renderCal();
+}
+
+function toggleDone(id) {
+  const t = tasks.find(x=>x.id===id); if (!t) return;
+  t.done = !t.done;
+  if (t.done && t.templateId) {
+    const tmpl = tasks.find(x=>x.id===t.templateId);
+    if (tmpl) {
+      const nd = nextOcc(tmpl, t.date||today());
+      if (!tasks.find(x=>!x.isTemplate&&x.templateId===tmpl.id&&!x.done&&x.date===nd))
+        tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,done:false,templateId:tmpl.id});
+    }
+  }
+  save(); renderAll();
+}
+
+function delTask(id) {
+  const t = tasks.find(x=>x.id===id); if (!t) return;
+  if (t.isTemplate) tasks = tasks.filter(x=>x.id!==id&&x.templateId!==id);
+  else tasks = tasks.filter(x=>x.id!==id);
+  save(); renderAll();
+}
+
+function editTask(id) {
+  const t = tasks.find(x=>x.id===id); if (!t) return;
+  const src = t.templateId ? tasks.find(x=>x.id===t.templateId) : t;
+  editId = id;
+  document.getElementById('f-title').value = src ? src.title : t.title;
+  document.getElementById('f-date').value = t.date||'';
+  document.getElementById('f-prio').value = src ? src.prio : t.prio;
+  document.getElementById('f-cat').value = src ? (src.cat||'') : (t.cat||'');
+  document.getElementById('f-rec').value = src ? (src.rec||'none') : (t.rec||'none');
+  document.querySelectorAll('.wday').forEach(b=>b.classList.toggle('sel',!!(src&&src.recDays&&src.recDays.includes(parseInt(b.dataset.d)))));
+  onRecChange();
+  document.getElementById('modal-title').textContent = 'Editar tarefa';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function openModal(date) {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Nova tarefa';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-date').value = date||today();
+  document.getElementById('f-prio').value = '2';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-rec').value = 'none';
+  document.querySelectorAll('.wday').forEach(b=>b.classList.remove('sel'));
+  onRecChange();
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('f-title').focus(), 50);
+}
+
+function closeModal() { document.getElementById('modal').style.display='none'; editId=null; }
+function onRecChange() { document.getElementById('week-days').style.display = document.getElementById('f-rec').value==='weekly' ? 'block' : 'none'; }
+function toggleWday(btn) { btn.classList.toggle('sel'); }
+
+function saveTask() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  const date = document.getElementById('f-date').value;
+  const prio = parseInt(document.getElementById('f-prio').value);
+  const cat = document.getElementById('f-cat').value.trim();
+  const rec = document.getElementById('f-rec').value;
+  const recDays = rec==='weekly' ? Array.from(document.querySelectorAll('.wday.sel')).map(b=>parseInt(b.dataset.d)) : [];
+  if (editId) {
+    const t = tasks.find(x=>x.id===editId);
+    if (t) {
+      const src = t.templateId ? tasks.find(x=>x.id===t.templateId) : t;
+      if (src) { src.title=title; src.prio=prio; src.cat=cat; src.rec=rec; src.recDays=recDays; }
+      t.date=date; t.title=title; t.prio=prio; t.cat=cat; t.rec=rec; t.recDays=recDays;
+    }
+  } else if (rec!=='none') {
+    const tid = uid();
+    tasks.push({id:tid,title,date,prio,cat,rec,recDays,isTemplate:true});
+    tasks.push({id:uid(),title,date:date||today(),prio,cat,rec,recDays,done:false,templateId:tid});
+  } else {
+    tasks.push({id:uid(),title,date,prio,cat,rec:'none',done:false});
+  }
+  save(); closeModal(); renderAll();
+}
+
+document.getElementById('modal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+load();
+</script>
+</body>
+</html>
