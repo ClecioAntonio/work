@@ -14,10 +14,11 @@
   --radius: 8px; --radius-lg: 12px; --radius-xl: 16px;
   --accent: #8b6fff; --accent-dim: #261f3d; --accent-bright: #a98fff;
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --hour-h: 64px;
 }
 
 body { font-family: var(--font); background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; }
-.app { max-width: 720px; margin: 0 auto; }
+.app { max-width: 960px; margin: 0 auto; }
 
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; gap: 8px; flex-wrap: wrap; }
 .header-left { display: flex; align-items: center; gap: 10px; }
@@ -64,16 +65,19 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .bp1{background:#2d1414;color:#f08080}.bp2{background:#2a1f0a;color:#e0a060}.bp3{background:#111b2d;color:#6aabf0}
 .bcat{background:var(--bg2);color:var(--text2)}.brec{background:#1a2b1a;color:#6dbf6d}
 .bdate{font-size:11px;color:var(--text3)}.bdate.ov{color:#f08080}
+.btime{background:#1d1a2d;color:#c4a8ff}
 .task-acts { display: flex; gap: 2px; flex-shrink: 0; }
 .ibtn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 4px 7px; border-radius: 6px; line-height: 1; transition: all .15s; font-family: var(--font); }
 .ibtn:hover { color: var(--text); background: var(--bg2); }
 .empty { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 13px; }
 
+/* ---- Calendar view ---- */
 .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
 .cal-title { font-size: 17px; font-weight: 600; color: var(--text); }
 .cal-navs { display: flex; gap: 4px; }
 .cnav { background: none; border: 1px solid var(--border2); border-radius: var(--radius); width: 32px; height: 32px; cursor: pointer; font-size: 15px; color: var(--text2); display: flex; align-items: center; justify-content: center; transition: all .15s; font-family: var(--font); }
 .cnav:hover { background: var(--bg2); color: var(--text); }
+.cnav-today { width: auto; padding: 0 12px; font-size: 12px; font-weight: 600; }
 .cal-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .cal-grid > * { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -95,6 +99,69 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .btn-add-day:hover { border-color: var(--border3); color: var(--text); }
 .dp-body { padding: 10px 12px; }
 
+/* ---- Week view ---- */
+#week-view { display: none; }
+.week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.week-range { font-size: 16px; font-weight: 600; color: var(--text); }
+
+.week-container { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
+.week-header-row { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); border-bottom: 1px solid var(--border); background: var(--bg2); }
+.week-time-gutter-head { border-right: 1px solid var(--border); }
+.week-day-head { padding: 10px 6px; text-align: center; border-right: 1px solid var(--border); }
+.week-day-head:last-child { border-right: none; }
+.wdh-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); }
+.wdh-num { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.1; margin-top: 2px; }
+.wdh-num.is-today { background: var(--accent); color: #fff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 2px auto 0; font-size: 16px; }
+
+/* All-day row */
+.week-allday-row { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); border-bottom: 2px solid var(--border2); min-height: 36px; }
+.week-allday-gutter { border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); padding: 4px 2px; }
+.week-allday-col { border-right: 1px solid var(--border); padding: 3px 4px; display: flex; flex-direction: column; gap: 2px; min-height: 36px; }
+.week-allday-col:last-child { border-right: none; }
+.allday-pill { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.allday-pill:hover { filter: brightness(1.15); }
+
+/* Scrollable time grid */
+.week-scroll { overflow-y: auto; max-height: 560px; position: relative; }
+.week-grid { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); position: relative; }
+.week-time-col { display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+.week-hour-label { height: var(--hour-h); display: flex; align-items: flex-start; justify-content: flex-end; padding: 4px 6px 0 0; font-size: 10px; color: var(--text3); font-weight: 500; flex-shrink: 0; }
+.week-day-col { position: relative; border-right: 1px solid var(--border); }
+.week-day-col:last-child { border-right: none; }
+.week-hour-slot { height: var(--hour-h); border-bottom: 1px solid var(--border); cursor: pointer; position: relative; transition: background .1s; }
+.week-hour-slot:hover { background: var(--bg2); }
+.week-hour-slot::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border); opacity: .5; pointer-events: none; }
+.week-hour-slot.today-col { background: rgba(139,111,255,.03); }
+.week-hour-slot.today-col:hover { background: rgba(139,111,255,.07); }
+
+/* Current time indicator */
+.time-indicator { position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); z-index: 10; pointer-events: none; }
+.time-indicator::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+/* Task blocks in week view */
+.week-task-block {
+  position: absolute; left: 3px; right: 3px;
+  border-radius: 6px; padding: 4px 7px;
+  cursor: pointer; z-index: 5; overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: filter .1s, box-shadow .1s;
+  display: flex; flex-direction: column;
+  user-select: none;
+}
+.week-task-block:hover { filter: brightness(1.15); box-shadow: 0 2px 12px rgba(0,0,0,.3); z-index: 6; }
+.week-task-block.done-block { opacity: .4; }
+.week-task-block.p1 { background: #2d1414; border-left-color: #e05555; }
+.week-task-block.p2 { background: #2a1f0a; border-left-color: #d4872a; }
+.week-task-block.p3 { background: #111b2d; border-left-color: #5590d4; }
+.wtb-title { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.wtb-time { font-size: 10px; color: var(--text2); margin-top: 1px; line-height: 1; }
+.wtb-resize { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; display: flex; align-items: center; justify-content: center; }
+.wtb-resize::before { content: ''; width: 20px; height: 2px; border-radius: 1px; background: rgba(255,255,255,.25); }
+
+/* Now line column highlight */
+.now-col { background: rgba(139,111,255,.04) !important; }
+
+/* Modal */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
 .modal { background: var(--bg); border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 1.5rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
 .modal-title { font-size: 17px; font-weight: 600; margin-bottom: .25rem; color: var(--text); }
@@ -104,6 +171,7 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .frow input, .frow select { width: 100%; font-size: 14px; border: 1px solid var(--border2); border-radius: var(--radius); padding: 9px 11px; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; font-family: var(--font); }
 .frow input:focus, .frow select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,111,255,.18); }
 .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fgrid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .wdays { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
 .wday { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text2); transition: all .15s; font-family: var(--font); }
 .wday.sel { background: var(--text); color: var(--bg); border-color: var(--text); }
@@ -113,14 +181,20 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .btn-save { background: var(--accent); color: #fff; border: none; border-radius: var(--radius); padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: opacity .15s; }
 .btn-save:hover { opacity: .88; } .btn-save:disabled { opacity: .5; cursor: not-allowed; }
 
-/* Category select with "add new" trigger */
-.cat-wrap { position: relative; }
-.cat-wrap select { width: 100%; }
+.form-divider { height: 1px; background: var(--border); margin: 12px 0 10px; }
+.form-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text3); margin-bottom: 8px; }
+
+/* Duration quick-pick chips */
+.dur-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.dur-chip { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px; font-size: 11px; cursor: pointer; color: var(--text2); transition: all .15s; font-family: var(--font); }
+.dur-chip:hover { border-color: var(--border3); color: var(--text); }
+.dur-chip.sel { background: var(--accent-dim); color: var(--accent-bright); border-color: var(--accent); }
+
+/* Category */
+.cat-wrap { position: relative; } .cat-wrap select { width: 100%; }
 .cat-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
 .cat-hint a { color: var(--accent-bright); cursor: pointer; text-decoration: none; }
 .cat-hint a:hover { text-decoration: underline; }
-
-/* Categories manager in settings */
 .cat-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .cat-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg2); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; color: var(--text); }
 .cat-item-name { flex: 1; }
@@ -144,15 +218,12 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 
 /* Settings */
 .settings-modal { max-width: 420px; }
-.settings-section { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); margin: 1rem 0 8px; }
-.settings-section:first-child { margin-top: 0; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
 .settings-row:last-child { border-bottom: none; }
 .settings-val { color: var(--text); font-weight: 500; }
 .btn-danger { background: none; border: 1px solid #E24B4A; border-radius: var(--radius); padding: 5px 12px; font-size: 12px; cursor: pointer; color: #A32D2D; font-family: var(--font); transition: all .15s; }
 .btn-danger:hover { background: #FCEBEB; }
 .btn-link { background: none; border: none; cursor: pointer; color: var(--accent-bright); font-size: 12px; font-family: var(--font); text-decoration: underline; }
-.section-divider { height: 1px; background: var(--border); margin: 12px 0; }
 </style>
 </head>
 <body>
@@ -168,13 +239,17 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
     <div class="header-right">
       <div class="vtoggle">
         <button class="vbtn active" onclick="setView('list',this)">&#8801; Lista</button>
+        <button class="vbtn" onclick="setView('week',this)">&#9784; Semana</button>
         <button class="vbtn" onclick="setView('cal',this)">&#8862; Calendário</button>
       </div>
       <button class="btn-new" onclick="openModal(null)">+ Nova tarefa</button>
       <button class="btn-icon" onclick="openSettings()" title="Configurações">&#9881;</button>
     </div>
   </div>
+
   <div class="stats" id="stats"></div>
+
+  <!-- List View -->
   <div id="list-view">
     <div class="tabs">
       <button class="tab active" onclick="setListTab('all',this)">Todas</button>
@@ -184,6 +259,27 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
     </div>
     <div id="task-list"></div>
   </div>
+
+  <!-- Week View -->
+  <div id="week-view">
+    <div class="week-nav">
+      <div class="week-range" id="week-range-label"></div>
+      <div class="cal-navs">
+        <button class="cnav" onclick="navWeek(-1)">&#8249;</button>
+        <button class="cnav cnav-today" onclick="goWeekToday()">Hoje</button>
+        <button class="cnav" onclick="navWeek(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="week-container">
+      <div class="week-header-row" id="week-header-row"></div>
+      <div class="week-allday-row" id="week-allday-row"></div>
+      <div class="week-scroll" id="week-scroll">
+        <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
   <div id="cal-view" style="display:none">
     <div class="cal-header">
       <div class="cal-title" id="cal-month-label"></div>
@@ -213,6 +309,26 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
         </select>
       </div>
     </div>
+
+    <div class="form-divider"></div>
+    <div class="form-section-label">Horário e duração</div>
+    <div class="fgrid">
+      <div class="frow"><label class="flabel">Horário</label><input id="f-time" type="time" placeholder="--:--"></div>
+      <div class="frow">
+        <label class="flabel">Duração (min)</label>
+        <input id="f-duration" type="number" min="5" max="720" step="5" value="" placeholder="ex: 60">
+      </div>
+    </div>
+    <div class="dur-chips" id="dur-chips">
+      <button class="dur-chip" onclick="setDurChip(15)">15 min</button>
+      <button class="dur-chip" onclick="setDurChip(30)">30 min</button>
+      <button class="dur-chip" onclick="setDurChip(60)">1 h</button>
+      <button class="dur-chip" onclick="setDurChip(90)">1 h 30</button>
+      <button class="dur-chip" onclick="setDurChip(120)">2 h</button>
+      <button class="dur-chip" onclick="setDurChip(180)">3 h</button>
+    </div>
+
+    <div class="form-divider"></div>
     <div class="fgrid">
       <div class="frow">
         <label class="flabel">Categoria</label>
@@ -284,176 +400,162 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 </div>
 
 <script>
-const TOKEN_KEY = 'gh-token', GIST_KEY = 'gh-gist-id', CACHE_KEY = 'app-data-cache';
-const GIST_DESC = 'Minhas Tarefas — App', GIST_FILE = 'tarefas.json';
+const TOKEN_KEY='gh-token',GIST_KEY='gh-gist-id',CACHE_KEY='app-data-cache';
+const GIST_DESC='Minhas Tarefas — App',GIST_FILE='tarefas.json';
+const START_HOUR=6, END_HOUR=23;  // hours displayed in week view
+const HOUR_H=64;                   // px per hour
+const MIN_BLOCK=20;                // px minimum block height
 
-// App data: tasks + categories
-let tasks = [], categories = ['Pessoal','Trabalho','Saúde','Casa','Financeiro'];
-let view = 'list', listTab = 'all', calYear, calMonth, selDay = null, editId = null;
-let ghToken = localStorage.getItem(TOKEN_KEY);
-let gistId  = localStorage.getItem(GIST_KEY);
+let tasks=[],categories=['Pessoal','Trabalho','Saúde','Casa','Financeiro'];
+let view='list',listTab='all',calYear,calMonth,selDay=null,editId=null;
+let ghToken=localStorage.getItem(TOKEN_KEY);
+let gistId=localStorage.getItem(GIST_KEY);
+let weekStart=getMonday(new Date());
 
-const now = new Date();
-calYear = now.getFullYear(); calMonth = now.getMonth();
+// Week view resize state
+let resizeState=null;
 
-const today = () => new Date().toISOString().slice(0,10);
-const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-const esc   = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
-const ghHdr = () => ({'Authorization':`token ${ghToken}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'});
+const now=new Date();
+calYear=now.getFullYear(); calMonth=now.getMonth();
 
-const MONTHS   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const MONTHS_S = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-const pLabel = ['','Alta','Média','Baixa'], pCls = ['','bp1','bp2','bp3'], pCalCls = ['','cp1','cp2','cp3'];
-const recLabel = {daily:'Diária',weekly:'Semanal',monthly:'Mensal'};
+const today=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const esc=s=>s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'';
+const ghHdr=()=>({'Authorization':`token ${ghToken}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'});
 
-/* ---- Sync ---- */
-function setSyncStatus(s, msg) {
-  const b = document.getElementById('sync-badge'), t = document.getElementById('sync-text');
-  b.style.display = 'flex'; b.className = 'sync-badge ' + s;
-  t.textContent = msg || {syncing:'Sincronizando…',synced:'Sincronizado',error:'Erro — clique para tentar'}[s];
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTHS_S=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DOW_SHORT=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const pLabel=['','Alta','Média','Baixa'],pCls=['','bp1','bp2','bp3'],pCalCls=['','cp1','cp2','cp3'];
+const recLabel={daily:'Diária',weekly:'Semanal',monthly:'Mensal'};
+
+/* ---------- Sync ---------- */
+function setSyncStatus(s,msg){
+  const b=document.getElementById('sync-badge'),t=document.getElementById('sync-text');
+  b.style.display='flex';b.className='sync-badge '+s;
+  t.textContent=msg||{syncing:'Sincronizando…',synced:'Sincronizado',error:'Erro — clique para tentar'}[s];
 }
-function onSyncClick() { if (document.getElementById('sync-badge').classList.contains('error')) loadFromGist(); }
-
-function packageData() { return JSON.stringify({tasks, categories}); }
-function unpackageData(raw) {
-  try {
-    const d = JSON.parse(raw);
-    if (Array.isArray(d)) { tasks = d; } // legacy: tasks-only format
-    else { tasks = d.tasks || []; categories = d.categories || categories; }
-  } catch(e) {}
+function onSyncClick(){if(document.getElementById('sync-badge').classList.contains('error'))loadFromGist();}
+function packageData(){return JSON.stringify({tasks,categories});}
+function unpackageData(raw){
+  try{
+    const d=JSON.parse(raw);
+    if(Array.isArray(d)){tasks=d;}
+    else{tasks=d.tasks||[];categories=d.categories||categories;}
+  }catch(e){}
 }
-
-async function loadFromGist() {
-  if (!ghToken) { showSetup(); return; }
+async function loadFromGist(){
+  if(!ghToken){showSetup();return;}
   setSyncStatus('syncing');
-  try {
-    if (!gistId) await findOrCreateGist();
-    const res = await fetch(`https://api.github.com/gists/${gistId}`, {headers: ghHdr()});
-    if (res.status === 404) { gistId = null; localStorage.removeItem(GIST_KEY); await findOrCreateGist(); return loadFromGist(); }
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    const raw  = data.files[GIST_FILE]?.content;
-    if (raw) unpackageData(raw);
-    localStorage.setItem(CACHE_KEY, packageData());
-    genRecurring(); setSyncStatus('synced'); renderAll();
-  } catch(e) {
+  try{
+    if(!gistId)await findOrCreateGist();
+    const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:ghHdr()});
+    if(res.status===404){gistId=null;localStorage.removeItem(GIST_KEY);await findOrCreateGist();return loadFromGist();}
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    const raw=data.files[GIST_FILE]?.content;
+    if(raw)unpackageData(raw);
+    localStorage.setItem(CACHE_KEY,packageData());
+    genRecurring();setSyncStatus('synced');renderAll();
+  }catch(e){
     setSyncStatus('error');
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (raw) unpackageData(raw);
-    genRecurring(); renderAll();
+    const raw=localStorage.getItem(CACHE_KEY);
+    if(raw)unpackageData(raw);
+    genRecurring();renderAll();
   }
 }
-
-async function findOrCreateGist() {
-  let page = 1;
-  while (true) {
-    const res = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, {headers: ghHdr()});
-    if (!res.ok) throw new Error();
-    const list = await res.json();
-    const found = list.find(g => g.description === GIST_DESC && g.files[GIST_FILE]);
-    if (found) { gistId = found.id; localStorage.setItem(GIST_KEY, gistId); return; }
-    if (list.length < 100) break;
+async function findOrCreateGist(){
+  let page=1;
+  while(true){
+    const res=await fetch(`https://api.github.com/gists?per_page=100&page=${page}`,{headers:ghHdr()});
+    if(!res.ok)throw new Error();
+    const list=await res.json();
+    const found=list.find(g=>g.description===GIST_DESC&&g.files[GIST_FILE]);
+    if(found){gistId=found.id;localStorage.setItem(GIST_KEY,gistId);return;}
+    if(list.length<100)break;
     page++;
   }
-  const res = await fetch('https://api.github.com/gists', {
-    method: 'POST', headers: ghHdr(),
-    body: JSON.stringify({description: GIST_DESC, public: false, files: {[GIST_FILE]: {content: packageData()}}})
+  const res=await fetch('https://api.github.com/gists',{
+    method:'POST',headers:ghHdr(),
+    body:JSON.stringify({description:GIST_DESC,public:false,files:{[GIST_FILE]:{content:packageData()}}})
   });
-  if (!res.ok) throw new Error();
-  const data = await res.json();
-  gistId = data.id; localStorage.setItem(GIST_KEY, gistId);
+  if(!res.ok)throw new Error();
+  const data=await res.json();
+  gistId=data.id;localStorage.setItem(GIST_KEY,gistId);
 }
-
-async function saveToGist() {
-  localStorage.setItem(CACHE_KEY, packageData());
-  if (!ghToken || !gistId) return;
+async function saveToGist(){
+  localStorage.setItem(CACHE_KEY,packageData());
+  if(!ghToken||!gistId)return;
   setSyncStatus('syncing');
-  try {
-    await fetch(`https://api.github.com/gists/${gistId}`, {
-      method: 'PATCH', headers: ghHdr(),
-      body: JSON.stringify({files: {[GIST_FILE]: {content: packageData()}}})
+  try{
+    await fetch(`https://api.github.com/gists/${gistId}`,{
+      method:'PATCH',headers:ghHdr(),
+      body:JSON.stringify({files:{[GIST_FILE]:{content:packageData()}}})
     });
     setSyncStatus('synced');
-  } catch(e) { setSyncStatus('error'); }
+  }catch(e){setSyncStatus('error');}
 }
 
-/* ---- Setup ---- */
-function showSetup() { document.getElementById('setup-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('gh-token-input').focus(),50); }
-
-async function connectGitHub() {
-  const token = document.getElementById('gh-token-input').value.trim();
-  const errEl = document.getElementById('setup-err'), btn = document.getElementById('btn-connect');
-  errEl.style.display = 'none';
-  if (!token) { errEl.textContent = 'Cole o token antes de continuar.'; errEl.style.display = 'block'; return; }
-  btn.disabled = true; btn.textContent = 'Conectando…';
-  try {
-    const test = await fetch('https://api.github.com/user', {headers: {'Authorization': `token ${token}`}});
-    if (!test.ok) throw new Error('Token inválido. Verifique e tente novamente.');
-    ghToken = token; localStorage.setItem(TOKEN_KEY, token);
-    gistId = null; localStorage.removeItem(GIST_KEY);
-    document.getElementById('setup-modal').style.display = 'none';
+/* ---------- Setup ---------- */
+function showSetup(){document.getElementById('setup-modal').style.display='flex';setTimeout(()=>document.getElementById('gh-token-input').focus(),50);}
+async function connectGitHub(){
+  const token=document.getElementById('gh-token-input').value.trim();
+  const errEl=document.getElementById('setup-err'),btn=document.getElementById('btn-connect');
+  errEl.style.display='none';
+  if(!token){errEl.textContent='Cole o token antes de continuar.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Conectando…';
+  try{
+    const test=await fetch('https://api.github.com/user',{headers:{'Authorization':`token ${token}`}});
+    if(!test.ok)throw new Error('Token inválido. Verifique e tente novamente.');
+    ghToken=token;localStorage.setItem(TOKEN_KEY,token);
+    gistId=null;localStorage.removeItem(GIST_KEY);
+    document.getElementById('setup-modal').style.display='none';
     await loadFromGist();
-  } catch(e) { errEl.textContent = e.message || 'Falha ao conectar.'; errEl.style.display = 'block'; }
-  btn.disabled = false; btn.textContent = 'Conectar e sincronizar';
+  }catch(e){errEl.textContent=e.message||'Falha ao conectar.';errEl.style.display='block';}
+  btn.disabled=false;btn.textContent='Conectar e sincronizar';
 }
 
-/* ---- Categories ---- */
-function populateCatSelect(currentVal) {
-  const sel = document.getElementById('f-cat');
-  sel.innerHTML = '<option value="">— Sem categoria —</option>' +
-    categories.map(c => `<option value="${esc(c)}"${c===currentVal?' selected':''}>${esc(c)}</option>`).join('');
-  if (currentVal) sel.value = currentVal;
+/* ---------- Categories ---------- */
+function populateCatSelect(currentVal){
+  const sel=document.getElementById('f-cat');
+  sel.innerHTML='<option value="">— Sem categoria —</option>'+
+    categories.map(c=>`<option value="${esc(c)}"${c===currentVal?' selected':''}>${esc(c)}</option>`).join('');
+  if(currentVal)sel.value=currentVal;
 }
-
-function addCategory(name) {
-  name = name.trim();
-  if (!name || categories.includes(name)) return false;
-  categories.push(name);
-  categories.sort((a,b) => a.localeCompare(b));
-  saveToGist();
-  return true;
+function addCategory(name){
+  name=name.trim();
+  if(!name||categories.includes(name))return false;
+  categories.push(name);categories.sort((a,b)=>a.localeCompare(b));saveToGist();return true;
 }
+function deleteCategory(name){categories=categories.filter(c=>c!==name);saveToGist();}
 
-function deleteCategory(name) {
-  categories = categories.filter(c => c !== name);
-  saveToGist();
-}
-
-/* ---- Settings ---- */
-function openSettings(tab) {
-  renderSettingsBody(tab || 'github');
-  document.getElementById('settings-modal').style.display = 'flex';
-}
-function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
-
-function renderSettingsBody(tab) {
-  const body = document.getElementById('settings-body');
-
-  // Tab switcher
-  const tabs = `<div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0">
+/* ---------- Settings ---------- */
+function openSettings(tab){renderSettingsBody(tab||'github');document.getElementById('settings-modal').style.display='flex';}
+function closeSettings(){document.getElementById('settings-modal').style.display='none';}
+function renderSettingsBody(tab){
+  const body=document.getElementById('settings-body');
+  const tabs=`<div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0">
     <button onclick="renderSettingsBody('cats')" style="background:none;border:none;padding:6px 12px 10px;font-size:13px;cursor:pointer;color:${tab==='cats'?'var(--text)':'var(--text2)'};font-weight:${tab==='cats'?600:400};font-family:var(--font);position:relative" id="stab-cats">Categorias${tab==='cats'?'<span style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--text);border-radius:2px 2px 0 0;display:block"></span>':''}</button>
     <button onclick="renderSettingsBody('github')" style="background:none;border:none;padding:6px 12px 10px;font-size:13px;cursor:pointer;color:${tab==='github'?'var(--text)':'var(--text2)'};font-weight:${tab==='github'?600:400};font-family:var(--font);position:relative" id="stab-github">GitHub${tab==='github'?'<span style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--text);border-radius:2px 2px 0 0;display:block"></span>':''}</button>
   </div>`;
-
-  if (tab === 'cats') {
-    const list = categories.length
-      ? categories.map(c => `<div class="cat-item"><span class="cat-item-name">${esc(c)}</span><button class="cat-del" onclick="deleteCatAndRefresh('${esc(c)}')">&#10005;</button></div>`).join('')
-      : '<div class="cat-empty">Nenhuma categoria cadastrada.</div>';
-    body.innerHTML = tabs + `
-      <div class="cat-list" id="cat-list">${list}</div>
+  if(tab==='cats'){
+    const list=categories.length
+      ?categories.map(c=>`<div class="cat-item"><span class="cat-item-name">${esc(c)}</span><button class="cat-del" onclick="deleteCatAndRefresh('${esc(c)}')">&#10005;</button></div>`).join('')
+      :'<div class="cat-empty">Nenhuma categoria cadastrada.</div>';
+    body.innerHTML=tabs+`<div class="cat-list" id="cat-list">${list}</div>
       <div class="cat-add-row">
         <input id="new-cat-input" type="text" placeholder="Nova categoria…" onkeydown="if(event.key==='Enter')addCatFromInput()">
         <button class="cat-add-btn" onclick="addCatFromInput()">Adicionar</button>
       </div>`;
-    setTimeout(() => document.getElementById('new-cat-input').focus(), 50);
-  } else {
-    if (!ghToken) {
-      body.innerHTML = tabs + `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">Nenhuma conta conectada.</div>
+    setTimeout(()=>document.getElementById('new-cat-input').focus(),50);
+  }else{
+    if(!ghToken){
+      body.innerHTML=tabs+`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">Nenhuma conta conectada.</div>
         <button class="btn-save" onclick="closeSettings();showSetup()" style="width:100%">Conectar ao GitHub</button>`;
-    } else {
-      const shortToken = '••••' + ghToken.slice(-4);
-      const gistUrl = gistId ? `https://gist.github.com/${gistId}` : null;
-      body.innerHTML = tabs + `
+    }else{
+      const shortToken='••••'+ghToken.slice(-4);
+      const gistUrl=gistId?`https://gist.github.com/${gistId}`:null;
+      body.innerHTML=tabs+`
         <div class="settings-row"><span>Token</span><span class="settings-val">${shortToken}</span></div>
         ${gistUrl?`<div class="settings-row"><span>Gist</span><button class="btn-link" onclick="window.open('${gistUrl}','_blank')">Abrir no GitHub &#8599;</button></div>`:''}
         <div class="settings-row"><span>Forçar sincronização</span><button class="btn-save" style="padding:5px 12px;font-size:12px" onclick="loadFromGist();closeSettings()">Sincronizar agora</button></div>
@@ -461,72 +563,99 @@ function renderSettingsBody(tab) {
     }
   }
 }
-
-function addCatFromInput() {
-  const input = document.getElementById('new-cat-input');
-  const name = input.value.trim();
-  if (!name) return;
-  if (categories.includes(name)) { input.select(); return; }
-  addCategory(name);
-  input.value = '';
-  renderSettingsBody('cats');
-  setTimeout(() => document.getElementById('new-cat-input').focus(), 30);
+function addCatFromInput(){
+  const input=document.getElementById('new-cat-input');
+  const name=input.value.trim();
+  if(!name)return;
+  if(categories.includes(name)){input.select();return;}
+  addCategory(name);input.value='';renderSettingsBody('cats');
+  setTimeout(()=>document.getElementById('new-cat-input').focus(),30);
+}
+function deleteCatAndRefresh(name){deleteCategory(name);renderSettingsBody('cats');}
+function disconnect(){
+  if(!confirm('Desconectar do GitHub? As tarefas ficam salvas localmente no cache.'))return;
+  ghToken=null;gistId=null;
+  localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(GIST_KEY);
+  closeSettings();document.getElementById('sync-badge').style.display='none';
 }
 
-function deleteCatAndRefresh(name) {
-  deleteCategory(name);
-  renderSettingsBody('cats');
+/* ---------- Helpers ---------- */
+function fmtDate(ds){
+  if(!ds)return'';
+  const td=today();
+  if(ds===td)return'Hoje';
+  const y=new Date();y.setDate(y.getDate()-1);
+  if(ds===y.toISOString().slice(0,10))return'Ontem';
+  const t=new Date();t.setDate(t.getDate()+1);
+  if(ds===t.toISOString().slice(0,10))return'Amanhã';
+  const d=new Date(ds+'T12:00:00');
+  return`${d.getDate()} ${MONTHS_S[d.getMonth()]}`;
 }
-
-function disconnect() {
-  if (!confirm('Desconectar do GitHub? As tarefas ficam salvas localmente no cache.')) return;
-  ghToken = null; gistId = null;
-  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(GIST_KEY);
-  closeSettings(); document.getElementById('sync-badge').style.display = 'none';
+function fmtDuration(min){
+  if(!min)return'';
+  if(min<60)return`${min}min`;
+  const h=Math.floor(min/60),m=min%60;
+  return m?`${h}h ${m}min`:`${h}h`;
 }
-
-/* ---- Core logic ---- */
-function fmtDate(ds) {
-  if (!ds) return '';
-  const td = today();
-  if (ds === td) return 'Hoje';
-  const y = new Date(); y.setDate(y.getDate()-1);
-  if (ds === y.toISOString().slice(0,10)) return 'Ontem';
-  const t = new Date(); t.setDate(t.getDate()+1);
-  if (ds === t.toISOString().slice(0,10)) return 'Amanhã';
-  const d = new Date(ds+'T12:00:00');
-  return `${d.getDate()} ${MONTHS_S[d.getMonth()]}`;
-}
-
-function nextOcc(tmpl, fromDate) {
-  const d = new Date(fromDate+'T12:00:00');
-  if (tmpl.rec==='daily') { d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
-  if (tmpl.rec==='monthly') { d.setMonth(d.getMonth()+1); return d.toISOString().slice(0,10); }
-  if (tmpl.rec==='weekly') {
+function nextOcc(tmpl,fromDate){
+  const d=new Date(fromDate+'T12:00:00');
+  if(tmpl.rec==='daily'){d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);}
+  if(tmpl.rec==='monthly'){d.setMonth(d.getMonth()+1);return d.toISOString().slice(0,10);}
+  if(tmpl.rec==='weekly'){
     const days=(tmpl.recDays&&tmpl.recDays.length)?tmpl.recDays.sort((a,b)=>a-b):[d.getDay()];
-    let cur=d.getDay(), nxt=days.find(x=>x>cur);
+    let cur=d.getDay(),nxt=days.find(x=>x>cur);
     if(nxt===undefined)nxt=days[0];
-    let diff=nxt-cur; if(diff<=0)diff+=7;
-    d.setDate(d.getDate()+diff); return d.toISOString().slice(0,10);
+    let diff=nxt-cur;if(diff<=0)diff+=7;
+    d.setDate(d.getDate()+diff);return d.toISOString().slice(0,10);
   }
   return fromDate;
 }
-
-function genRecurring() {
-  const td = today();
-  tasks.filter(t=>t.isTemplate).forEach(tmpl => {
-    if (tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&!t.done).length) return;
-    const lastDone = tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&t.done).sort((a,b)=>b.date>a.date?1:-1)[0];
-    const base = lastDone ? nextOcc(tmpl, lastDone.date) : (tmpl.date||td);
-    const nd = base < td ? td : base;
-    tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,done:false,templateId:tmpl.id});
+function genRecurring(){
+  const td=today();
+  tasks.filter(t=>t.isTemplate).forEach(tmpl=>{
+    if(tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&!t.done).length)return;
+    const lastDone=tasks.filter(t=>!t.isTemplate&&t.templateId===tmpl.id&&t.done).sort((a,b)=>b.date>a.date?1:-1)[0];
+    const base=lastDone?nextOcc(tmpl,lastDone.date):(tmpl.date||td);
+    const nd=base<td?td:base;
+    tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,startTime:tmpl.startTime,duration:tmpl.duration,done:false,templateId:tmpl.id});
   });
 }
 
-function renderAll() { renderStats(); view==='list' ? renderList() : renderCal(); }
+/* ---------- Week helpers ---------- */
+function getMonday(d){
+  const day=d.getDay(); // 0=Sun
+  const diff=day===0?-6:1-day;
+  const mon=new Date(d);
+  mon.setDate(d.getDate()+diff);
+  mon.setHours(0,0,0,0);
+  return mon;
+}
+function getWeekDates(mon){
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(mon);d.setDate(mon.getDate()+i);return d;
+  });
+}
+function dateToStr(d){return d.toISOString().slice(0,10);}
+function timeToMinutes(t){
+  if(!t)return null;
+  const[h,m]=t.split(':').map(Number);return h*60+m;
+}
+function minutesToTime(m){
+  const h=Math.floor(m/60),mm=m%60;
+  return`${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+}
 
-function renderStats() {
-  const td=today(), active=tasks.filter(t=>!t.isTemplate);
+/* ---------- Render All ---------- */
+function renderAll(){
+  renderStats();
+  if(view==='list')renderList();
+  else if(view==='week')renderWeek();
+  else renderCal();
+}
+
+/* ---------- Stats ---------- */
+function renderStats(){
+  const td=today(),active=tasks.filter(t=>!t.isTemplate);
   document.getElementById('stats').innerHTML=`
     <div class="stat"><div class="stat-n">${active.filter(t=>!t.done).length}</div><div class="stat-l">Pendentes</div></div>
     <div class="stat"><div class="stat-n">${active.filter(t=>t.date===td&&!t.done).length}</div><div class="stat-l">Hoje</div></div>
@@ -534,33 +663,42 @@ function renderStats() {
     <div class="stat"><div class="stat-n">${active.filter(t=>t.done).length}</div><div class="stat-l">Concluídas</div></div>`;
 }
 
-function setView(v, btn) {
-  view=v; document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+/* ---------- View switching ---------- */
+function setView(v,btn){
+  view=v;
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
   document.getElementById('list-view').style.display=v==='list'?'block':'none';
+  document.getElementById('week-view').style.display=v==='week'?'block':'none';
   document.getElementById('cal-view').style.display=v==='cal'?'block':'none';
-  if(v==='cal') renderCal();
+  if(v==='week')renderWeek();
+  if(v==='cal')renderCal();
 }
-function setListTab(t, el) { listTab=t; document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); el.classList.add('active'); renderList(); }
 
-function renderList() {
+/* ---------- List view ---------- */
+function setListTab(t,el){listTab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderList();}
+function renderList(){
   const td=today();
   let vis=tasks.filter(t=>!t.isTemplate);
-  if(listTab==='today') vis=vis.filter(t=>t.date===td);
-  if(listTab==='pending') vis=vis.filter(t=>!t.done);
-  if(listTab==='done') vis=vis.filter(t=>t.done);
-  vis.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;if((a.date||'9')<(b.date||'9'))return -1;if((a.date||'9')>(b.date||'9'))return 1;return(a.prio||2)-(b.prio||2);});
+  if(listTab==='today')vis=vis.filter(t=>t.date===td);
+  if(listTab==='pending')vis=vis.filter(t=>!t.done);
+  if(listTab==='done')vis=vis.filter(t=>t.done);
+  vis.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;if((a.date||'9')<(b.date||'9'))return-1;if((a.date||'9')>(b.date||'9'))return 1;return(a.prio||2)-(b.prio||2);});
   const el=document.getElementById('task-list');
   if(!vis.length){el.innerHTML='<div class="empty">Nenhuma tarefa aqui</div>';return;}
   el.innerHTML=vis.map(t=>{
     const ov=!t.done&&t.date&&t.date<td;
     const tmpl=t.templateId?tasks.find(x=>x.id===t.templateId):null;
     const rt=tmpl?tmpl.rec:t.rec;
-    return `<div class="task-card p${t.prio}${t.done?' done':''}">
+    const st=t.startTime||(tmpl?tmpl.startTime:null);
+    const dur=t.duration||(tmpl?tmpl.duration:null);
+    return`<div class="task-card p${t.prio}${t.done?' done':''}">
       <button class="chk${t.done?' on':''}" onclick="toggleDone('${t.id}')"></button>
       <div class="task-body">
         <div class="task-title">${esc(t.title)}</div>
         <div class="task-meta">
           ${t.date?`<span class="badge bdate${ov?' ov':''}">${fmtDate(t.date)}</span>`:''}
+          ${st?`<span class="badge btime">&#128336; ${st}${dur?' · '+fmtDuration(dur):''}</span>`:''}
           <span class="badge ${pCls[t.prio]}">${pLabel[t.prio]}</span>
           ${t.cat?`<span class="badge bcat">${esc(t.cat)}</span>`:''}
           ${rt&&rt!=='none'?`<span class="badge brec">&#8635; ${recLabel[rt]}</span>`:''}
@@ -574,9 +712,175 @@ function renderList() {
   }).join('');
 }
 
-function renderCal() {
+/* ---------- Week view ---------- */
+function navWeek(dir){weekStart=new Date(weekStart);weekStart.setDate(weekStart.getDate()+dir*7);renderWeek();}
+function goWeekToday(){weekStart=getMonday(new Date());renderWeek();}
+
+function renderWeek(){
+  const days=getWeekDates(weekStart);
+  const td=today();
+  const nowD=new Date();
+
+  // Range label
+  const firstDay=days[0],lastDay=days[6];
+  let rangeLabel;
+  if(firstDay.getMonth()===lastDay.getMonth()){
+    rangeLabel=`${firstDay.getDate()} – ${lastDay.getDate()} de ${MONTHS[firstDay.getMonth()]} ${firstDay.getFullYear()}`;
+  }else{
+    rangeLabel=`${firstDay.getDate()} ${MONTHS_S[firstDay.getMonth()]} – ${lastDay.getDate()} ${MONTHS_S[lastDay.getMonth()]} ${lastDay.getFullYear()}`;
+  }
+  document.getElementById('week-range-label').textContent=rangeLabel;
+
+  // Header row
+  const headerRow=document.getElementById('week-header-row');
+  headerRow.innerHTML=`<div class="week-time-gutter-head"></div>`+
+    days.map(d=>{
+      const ds=dateToStr(d);
+      const isToday=ds===td;
+      return`<div class="week-day-head">
+        <div class="wdh-label">${DOW_SHORT[d.getDay()]}</div>
+        <div class="wdh-num${isToday?' is-today':''}">${d.getDate()}</div>
+      </div>`;
+    }).join('');
+
+  // All-day row (tasks without startTime)
+  const alldayRow=document.getElementById('week-allday-row');
+  alldayRow.innerHTML=`<div class="week-allday-gutter">Dia todo</div>`+
+    days.map(d=>{
+      const ds=dateToStr(d);
+      const dayTasks=tasks.filter(t=>!t.isTemplate&&t.date===ds&&!t.startTime);
+      return`<div class="week-allday-col">`+
+        dayTasks.map(t=>`<div class="allday-pill ${pCalCls[t.prio]}${t.done?' cdone':''}" onclick="editTask('${t.id}')" title="${esc(t.title)}">${esc(t.title)}</div>`).join('')+
+        `</div>`;
+    }).join('');
+
+  // Time grid
+  const weekGrid=document.getElementById('week-grid');
+  const hours=Array.from({length:END_HOUR-START_HOUR+1},(_,i)=>START_HOUR+i);
+
+  // Build columns HTML
+  // Time label column
+  let html=`<div class="week-time-col">`;
+  hours.forEach(h=>{
+    html+=`<div class="week-hour-label">${h}:00</div>`;
+  });
+  html+=`</div>`;
+
+  // Day columns
+  days.forEach((d,di)=>{
+    const ds=dateToStr(d);
+    const isToday=ds===td;
+    html+=`<div class="week-day-col" id="wdc-${di}">`;
+    // Hour slots (clickable)
+    hours.forEach(h=>{
+      html+=`<div class="week-hour-slot${isToday?' today-col':''}" onclick="onSlotClick('${ds}','${String(h).padStart(2,'0')}:00',event)"></div>`;
+    });
+    // Current time indicator
+    if(isToday){
+      const totalMin=(nowD.getHours()-START_HOUR)*60+nowD.getMinutes();
+      if(totalMin>=0&&totalMin<=(END_HOUR-START_HOUR+1)*60){
+        const topPx=totalMin*(HOUR_H/60);
+        html+=`<div class="time-indicator" id="time-indicator" style="top:${topPx}px"></div>`;
+      }
+    }
+    html+=`</div>`;
+  });
+
+  weekGrid.innerHTML=html;
+
+  // Render task blocks
+  days.forEach((d,di)=>{
+    const ds=dateToStr(d);
+    const col=document.getElementById(`wdc-${di}`);
+    if(!col)return;
+    const dayTasks=tasks.filter(t=>!t.isTemplate&&t.date===ds&&t.startTime);
+    dayTasks.forEach(t=>renderTaskBlock(t,col));
+  });
+
+  // Scroll to current time or 8:00
+  const scroll=document.getElementById('week-scroll');
+  const nowMin=(nowD.getHours()-START_HOUR)*60+nowD.getMinutes();
+  const target=Math.max(0,nowMin*(HOUR_H/60)-80);
+  scroll.scrollTop=target>0?target:(2*HOUR_H); // scroll to 8am if not today
+}
+
+function renderTaskBlock(t,col){
+  const startMin=timeToMinutes(t.startTime);
+  if(startMin===null)return;
+  const offsetMin=(startMin-START_HOUR*60);
+  if(offsetMin<0||offsetMin>=(END_HOUR-START_HOUR+1)*60)return;
+
+  const duration=t.duration||60;
+  const topPx=offsetMin*(HOUR_H/60);
+  const heightPx=Math.max(MIN_BLOCK,duration*(HOUR_H/60));
+
+  const endMin=startMin+duration;
+  const endTime=minutesToTime(endMin);
+
+  const block=document.createElement('div');
+  block.className=`week-task-block p${t.prio}${t.done?' done-block':''}`;
+  block.style.top=topPx+'px';
+  block.style.height=heightPx+'px';
+  block.dataset.id=t.id;
+  block.innerHTML=`
+    <div class="wtb-title">${esc(t.title)}</div>
+    <div class="wtb-time">${t.startTime} – ${endTime}${t.cat?' · '+esc(t.cat):''}</div>
+    <div class="wtb-resize" data-resize="${t.id}"></div>`;
+
+  block.addEventListener('click',e=>{
+    if(e.target.dataset.resize)return;
+    e.stopPropagation();
+    editTask(t.id);
+  });
+
+  const resizeHandle=block.querySelector('[data-resize]');
+  resizeHandle.addEventListener('mousedown',e=>{
+    e.stopPropagation();e.preventDefault();
+    resizeState={id:t.id,startY:e.clientY,origDuration:duration,block,topPx};
+    document.body.style.cursor='ns-resize';
+    document.body.style.userSelect='none';
+  });
+
+  col.appendChild(block);
+}
+
+document.addEventListener('mousemove',e=>{
+  if(!resizeState)return;
+  const delta=e.clientY-resizeState.startY;
+  const minPerPx=60/HOUR_H;
+  const newDuration=Math.max(15,Math.round((resizeState.origDuration+delta*minPerPx)/5)*5);
+  const heightPx=Math.max(MIN_BLOCK,newDuration*(HOUR_H/60));
+  resizeState.block.style.height=heightPx+'px';
+
+  const t=tasks.find(x=>x.id===resizeState.id);
+  if(t){
+    const endMin=timeToMinutes(t.startTime)+newDuration;
+    resizeState.block.querySelector('.wtb-time').textContent=
+      `${t.startTime} – ${minutesToTime(endMin)}${t.cat?' · '+t.cat:''}`;
+  }
+  resizeState.currentDuration=newDuration;
+});
+
+document.addEventListener('mouseup',e=>{
+  if(!resizeState)return;
+  if(resizeState.currentDuration){
+    const t=tasks.find(x=>x.id===resizeState.id);
+    if(t){t.duration=resizeState.currentDuration;saveToGist();}
+  }
+  resizeState=null;
+  document.body.style.cursor='';
+  document.body.style.userSelect='';
+});
+
+function onSlotClick(date,time,e){
+  if(e.target.dataset.resize)return;
+  openModal(date,time);
+}
+
+/* ---------- Calendar view ---------- */
+function renderCal(){
   document.getElementById('cal-month-label').textContent=`${MONTHS[calMonth]} ${calYear}`;
-  const td=today(), first=new Date(calYear,calMonth,1), last=new Date(calYear,calMonth+1,0);
+  const td=today(),first=new Date(calYear,calMonth,1),last=new Date(calYear,calMonth+1,0);
   const tbd={};
   tasks.filter(t=>!t.isTemplate&&t.date).forEach(t=>{if(!tbd[t.date])tbd[t.date]=[];tbd[t.date].push(t);});
   const cells=[];
@@ -587,7 +891,7 @@ function renderCal() {
     ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="cal-dow">${d}</div>`).join('')+
     cells.map(c=>{
       const ct=tbd[c.date]||[],shown=ct.slice(0,2),more=ct.length-shown.length;
-      return `<div class="cal-day${c.om?' om':''}${c.date===td?' tod':''}${c.date===selDay?' sel':''}" onclick="selectDay('${c.date}')">
+      return`<div class="cal-day${c.om?' om':''}${c.date===td?' tod':''}${c.date===selDay?' sel':''}" onclick="selectDay('${c.date}')">
         <div class="dn">${c.day}</div>
         <div class="cal-pills">
           ${shown.map(t=>`<div class="cpill ${pCalCls[t.prio]}${t.done?' cdone':''}">${esc(t.title)}</div>`).join('')}
@@ -597,10 +901,8 @@ function renderCal() {
     }).join('');
   renderDayPanel();
 }
-
 function selectDay(date){selDay=selDay===date?null:date;renderCal();}
-
-function renderDayPanel() {
+function renderDayPanel(){
   const p=document.getElementById('day-panel');
   if(!selDay){p.style.display='none';return;}
   const dt=tasks.filter(t=>!t.isTemplate&&t.date===selDay);
@@ -611,11 +913,14 @@ function renderDayPanel() {
     dt.map(t=>{
       const tmpl=t.templateId?tasks.find(x=>x.id===t.templateId):null;
       const rt=tmpl?tmpl.rec:t.rec;
-      return `<div class="task-card p${t.prio}${t.done?' done':''}">
+      const st=t.startTime||(tmpl?tmpl.startTime:null);
+      const dur=t.duration||(tmpl?tmpl.duration:null);
+      return`<div class="task-card p${t.prio}${t.done?' done':''}">
         <button class="chk${t.done?' on':''}" onclick="toggleDone('${t.id}')"></button>
         <div class="task-body">
           <div class="task-title">${esc(t.title)}</div>
           <div class="task-meta">
+            ${st?`<span class="badge btime">&#128336; ${st}${dur?' · '+fmtDuration(dur):''}</span>`:''}
             <span class="badge ${pCls[t.prio]}">${pLabel[t.prio]}</span>
             ${t.cat?`<span class="badge bcat">${esc(t.cat)}</span>`:''}
             ${rt&&rt!=='none'?`<span class="badge brec">&#8635; ${recLabel[rt]}</span>`:''}
@@ -629,21 +934,24 @@ function renderDayPanel() {
     }).join('')
   }</div>`;
 }
-
 function navMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
 
-function toggleDone(id) {
+/* ---------- Task CRUD ---------- */
+function toggleDone(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   t.done=!t.done;
   if(t.done&&t.templateId){
     const tmpl=tasks.find(x=>x.id===t.templateId);
-    if(tmpl){const nd=nextOcc(tmpl,t.date||today());if(!tasks.find(x=>!x.isTemplate&&x.templateId===tmpl.id&&!x.done&&x.date===nd))tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,done:false,templateId:tmpl.id});}
+    if(tmpl){const nd=nextOcc(tmpl,t.date||today());if(!tasks.find(x=>!x.isTemplate&&x.templateId===tmpl.id&&!x.done&&x.date===nd))tasks.push({id:uid(),title:tmpl.title,date:nd,prio:tmpl.prio,cat:tmpl.cat,rec:tmpl.rec,recDays:tmpl.recDays,startTime:tmpl.startTime,duration:tmpl.duration,done:false,templateId:tmpl.id});}
   }
   saveToGist();renderAll();
 }
-
-function delTask(id){const t=tasks.find(x=>x.id===id);if(!t)return;if(t.isTemplate)tasks=tasks.filter(x=>x.id!==id&&x.templateId!==id);else tasks=tasks.filter(x=>x.id!==id);saveToGist();renderAll();}
-
+function delTask(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  if(t.isTemplate)tasks=tasks.filter(x=>x.id!==id&&x.templateId!==id);
+  else tasks=tasks.filter(x=>x.id!==id);
+  saveToGist();renderAll();
+}
 function editTask(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   const src=t.templateId?tasks.find(x=>x.id===t.templateId):t;
@@ -653,13 +961,17 @@ function editTask(id){
   document.getElementById('f-prio').value=src?src.prio:t.prio;
   populateCatSelect(src?(src.cat||''):(t.cat||''));
   document.getElementById('f-rec').value=src?(src.rec||'none'):(t.rec||'none');
+  const st=t.startTime||(src?src.startTime:null);
+  const dur=t.duration||(src?src.duration:null);
+  document.getElementById('f-time').value=st||'';
+  document.getElementById('f-duration').value=dur||'';
+  updateDurChips(dur||null);
   document.querySelectorAll('.wday').forEach(b=>b.classList.toggle('sel',!!(src&&src.recDays&&src.recDays.includes(parseInt(b.dataset.d)))));
   onRecChange();
   document.getElementById('modal-title').textContent='Editar tarefa';
   document.getElementById('modal').style.display='flex';
 }
-
-function openModal(date){
+function openModal(date,time){
   editId=null;
   document.getElementById('modal-title').textContent='Nova tarefa';
   document.getElementById('f-title').value='';
@@ -667,6 +979,9 @@ function openModal(date){
   document.getElementById('f-prio').value='2';
   populateCatSelect('');
   document.getElementById('f-rec').value='none';
+  document.getElementById('f-time').value=time||'';
+  document.getElementById('f-duration').value=time?'60':'';
+  updateDurChips(time?60:null);
   document.querySelectorAll('.wday').forEach(b=>b.classList.remove('sel'));
   onRecChange();
   document.getElementById('modal').style.display='flex';
@@ -676,31 +991,76 @@ function closeModal(){document.getElementById('modal').style.display='none';edit
 function onRecChange(){document.getElementById('week-days').style.display=document.getElementById('f-rec').value==='weekly'?'block':'none';}
 function toggleWday(btn){btn.classList.toggle('sel');}
 
+function setDurChip(min){
+  document.getElementById('f-duration').value=min;
+  updateDurChips(min);
+}
+function updateDurChips(val){
+  document.querySelectorAll('.dur-chip').forEach(c=>{
+    c.classList.toggle('sel',parseInt(c.textContent.replace(/\D/g,''))===val||(val&&c.dataset.min&&parseInt(c.dataset.min)===val));
+  });
+  // match by minute value
+  document.querySelectorAll('.dur-chip').forEach(c=>{
+    const chipMin=parseInt(c.getAttribute('onclick').match(/\d+/)?.[0]);
+    c.classList.toggle('sel',chipMin===val);
+  });
+}
+
+// Sync duration chips when input changes
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-duration').addEventListener('input',function(){
+    updateDurChips(parseInt(this.value)||null);
+  });
+});
+
 function saveTask(){
   const title=document.getElementById('f-title').value.trim();
   if(!title){document.getElementById('f-title').focus();return;}
-  const date=document.getElementById('f-date').value, prio=parseInt(document.getElementById('f-prio').value);
-  const cat=document.getElementById('f-cat').value, rec=document.getElementById('f-rec').value;
+  const date=document.getElementById('f-date').value;
+  const prio=parseInt(document.getElementById('f-prio').value);
+  const cat=document.getElementById('f-cat').value;
+  const rec=document.getElementById('f-rec').value;
   const recDays=rec==='weekly'?Array.from(document.querySelectorAll('.wday.sel')).map(b=>parseInt(b.dataset.d)):[];
+  const startTime=document.getElementById('f-time').value||null;
+  const durationRaw=parseInt(document.getElementById('f-duration').value);
+  const duration=(startTime&&durationRaw>0)?durationRaw:(durationRaw>0?durationRaw:null);
+
   if(editId){
     const t=tasks.find(x=>x.id===editId);
-    if(t){const src=t.templateId?tasks.find(x=>x.id===t.templateId):t;if(src){src.title=title;src.prio=prio;src.cat=cat;src.rec=rec;src.recDays=recDays;}t.date=date;t.title=title;t.prio=prio;t.cat=cat;t.rec=rec;t.recDays=recDays;}
-  } else if(rec!=='none'){
+    if(t){
+      const src=t.templateId?tasks.find(x=>x.id===t.templateId):t;
+      if(src){src.title=title;src.prio=prio;src.cat=cat;src.rec=rec;src.recDays=recDays;src.startTime=startTime;src.duration=duration;}
+      t.date=date;t.title=title;t.prio=prio;t.cat=cat;t.rec=rec;t.recDays=recDays;t.startTime=startTime;t.duration=duration;
+    }
+  }else if(rec!=='none'){
     const tid=uid();
-    tasks.push({id:tid,title,date,prio,cat,rec,recDays,isTemplate:true});
-    tasks.push({id:uid(),title,date:date||today(),prio,cat,rec,recDays,done:false,templateId:tid});
-  } else {
-    tasks.push({id:uid(),title,date,prio,cat,rec:'none',done:false});
+    tasks.push({id:tid,title,date,prio,cat,rec,recDays,startTime,duration,isTemplate:true});
+    tasks.push({id:uid(),title,date:date||today(),prio,cat,rec,recDays,startTime,duration,done:false,templateId:tid});
+  }else{
+    tasks.push({id:uid(),title,date,prio,cat,rec:'none',startTime,duration,done:false});
   }
   saveToGist();closeModal();renderAll();
 }
 
+/* ---------- Event listeners ---------- */
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 document.getElementById('settings-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSettings();});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeModal();closeSettings();}
   if(e.key==='Enter'&&document.getElementById('setup-modal').style.display==='flex')connectGitHub();
 });
+
+// Update current time indicator every minute
+setInterval(()=>{
+  if(view==='week'){
+    const ind=document.getElementById('time-indicator');
+    if(ind){
+      const n=new Date();
+      const totalMin=(n.getHours()-START_HOUR)*60+n.getMinutes();
+      ind.style.top=(totalMin*(HOUR_H/60))+'px';
+    }
+  }
+},60000);
 
 loadFromGist();
 </script>
