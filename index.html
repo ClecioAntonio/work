@@ -149,7 +149,7 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .time-indicator::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 
 /* Week task blocks */
-.week-task-block { position: absolute; left: 3px; right: 3px; border-radius: 6px; padding: 4px 7px; cursor: grab; z-index: 5; overflow: hidden; border-left: 3px solid transparent; transition: filter .1s, box-shadow .1s; display: flex; flex-direction: column; user-select: none; }
+.week-task-block { position: absolute; border-radius: 6px; padding: 4px 7px; cursor: grab; z-index: 5; overflow: hidden; border-left: 3px solid transparent; transition: filter .1s, box-shadow .1s; display: flex; flex-direction: column; user-select: none; }
 .week-task-block:hover { filter: brightness(1.12); box-shadow: 0 2px 12px rgba(0,0,0,.35); z-index: 6; }
 .week-task-block.is-dragging { cursor: grabbing; opacity: .2 !important; filter: none !important; }
 .week-task-block.done-block { opacity: .38; }
@@ -165,7 +165,7 @@ body { font-family: var(--font); background: var(--bg3); color: var(--text); min
 .drag-ghost-title { font-size: 11px; font-weight: 600; color: #ede9f8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drag-ghost-time { font-size: 10px; color: #9b92b8; margin-top: 2px; }
 
-/* Light mode overrides for hardcoded colours */
+/* Light mode overrides */
 html.light .week-task-block.p1 { background: #fde8e8; border-left-color: #d03030; }
 html.light .week-task-block.p2 { background: #fef0df; border-left-color: #c07020; }
 html.light .week-task-block.p3 { background: #e8f0fd; border-left-color: #3070c0; }
@@ -727,6 +727,34 @@ function renderList(){
 }
 
 /* ===== WEEK VIEW ===== */
+
+/* --- Overlap layout --- */
+function computeLayout(ts){
+  if(!ts.length)return{};
+  const sorted=[...ts].sort((a,b)=>t2m(a.startTime)-t2m(b.startTime));
+  const laneEnds=[];
+  const taskCol={};
+  sorted.forEach(t=>{
+    const s=t2m(t.startTime),e=s+(t.duration||60);
+    let lane=-1;
+    for(let i=0;i<laneEnds.length;i++){if(laneEnds[i]<=s){lane=i;laneEnds[i]=e;break;}}
+    if(lane===-1){lane=laneEnds.length;laneEnds.push(e);}
+    taskCol[t.id]=lane;
+  });
+  const result={};
+  sorted.forEach(t=>{
+    const s=t2m(t.startTime),e=s+(t.duration||60);
+    let maxCol=taskCol[t.id];
+    sorted.forEach(u=>{
+      if(u.id===t.id)return;
+      const us=t2m(u.startTime),ue=us+(u.duration||60);
+      if(us<e&&ue>s)maxCol=Math.max(maxCol,taskCol[u.id]);
+    });
+    result[t.id]={col:taskCol[t.id],totalCols:maxCol+1};
+  });
+  return result;
+}
+
 function navWeek(dir){weekStart=new Date(weekStart);weekStart.setDate(weekStart.getDate()+dir*7);renderWeek();}
 function goWeekToday(){weekStart=getMonday(new Date());renderWeek();}
 function renderWeek(){
@@ -757,7 +785,9 @@ function renderWeek(){
 
   days.forEach((d,di)=>{
     const col=document.getElementById(`wdc-${di}`);if(!col)return;
-    tasks.filter(t=>!t.isTemplate&&t.date===dStr(d)&&t.startTime).forEach(t=>renderTaskBlock(t,col));
+    const timedTasks=tasks.filter(t=>!t.isTemplate&&t.date===dStr(d)&&t.startTime);
+    const layout=computeLayout(timedTasks);
+    timedTasks.forEach(t=>renderTaskBlock(t,col,layout[t.id]||{col:0,totalCols:1}));
   });
 
   const scroll=document.getElementById('week-scroll');
@@ -765,13 +795,24 @@ function renderWeek(){
   scroll.scrollTop=nowMin>0?Math.max(0,nowMin*(HOUR_H/60)-80):2*HOUR_H;
 }
 
-function renderTaskBlock(t,col){
+function renderTaskBlock(t,col,layout){
   const sm=t2m(t.startTime);if(sm===null)return;
   const off=sm-START_HOUR*60;if(off<0||off>=(END_HOUR-START_HOUR+1)*60)return;
   const dur=t.duration||60,topPx=off*(HOUR_H/60),hPx=Math.max(MIN_BLOCK,dur*(HOUR_H/60)),endTime=m2t(sm+dur);
   const block=document.createElement('div');
   block.className=`week-task-block p${t.prio}${t.done?' done-block':''}`;
-  block.style.top=topPx+'px';block.style.height=hPx+'px';block.dataset.id=t.id;
+
+  /* ---- overlap positioning ---- */
+  const lc=(layout&&layout.col!=null)?layout.col:0;
+  const tc=(layout&&layout.totalCols)?layout.totalCols:1;
+  block.style.top=topPx+'px';
+  block.style.height=hPx+'px';
+  block.style.left=`calc(${(lc/tc)*100}% + 3px)`;
+  block.style.width=`calc(${(1/tc)*100}% - 6px)`;
+  block.style.right='auto';
+  /* -------------------------------- */
+
+  block.dataset.id=t.id;
   const lnkHtml=t.link?`<a class="wtb-link-btn" href="${esc(t.link)}" target="_blank" rel="noopener" title="Abrir link">🔗</a>`:'';
   block.innerHTML=`
     <div class="wtb-header">
@@ -782,20 +823,16 @@ function renderTaskBlock(t,col){
     <div class="wtb-time" id="wtb-time-${t.id}">${t.startTime} – ${endTime}${t.cat?' · '+esc(t.cat):''}</div>
     <div class="wtb-resize" data-resize="${t.id}"></div>`;
 
-  // Mousedown: start drag or resize tracking
   block.addEventListener('mousedown',e=>{
     if(e.button!==0)return;
-    // Resize handle
     if(e.target.dataset.resize){
       e.stopPropagation();e.preventDefault();
       resizeState={id:t.id,startY:e.clientY,origDuration:dur,block};
       document.body.style.cursor='ns-resize';document.body.style.userSelect='none';
       return;
     }
-    // Checkbox or link — let them handle themselves
     if(e.target.dataset.chk){toggleDone(e.target.dataset.chk);return;}
     if(e.target.closest('.wtb-link-btn')||e.target.classList.contains('wtb-link-btn'))return;
-    // Start potential drag
     e.preventDefault();
     const br=block.getBoundingClientRect();
     dragState={id:t.id,prio:t.prio,title:t.title,origDate:t.date,origTime:t.startTime,duration:dur,startX:e.clientX,startY:e.clientY,offsetY:e.clientY-br.top,block,dragging:false,ghost:null,indicator:null,dropTarget:null};
@@ -810,12 +847,10 @@ function getDropTarget(clientX,clientY){
   const scroll=document.getElementById('week-scroll'),grid=document.getElementById('week-grid');
   if(!scroll||!grid)return null;
   const gridRect=grid.getBoundingClientRect(),scrollTop=scroll.scrollTop;
-  // Y → time snapped to 15 min
   const relY=clientY-gridRect.top+scrollTop;
   let totalMins=Math.round(relY/HOUR_H*60/15)*15;
   totalMins=Math.max(0,Math.min(totalMins,(END_HOUR-START_HOUR)*60));
   const time=m2t(Math.min(START_HOUR*60+totalMins,(END_HOUR-1)*60+45));
-  // X → day column
   const gutterW=52,colW=(gridRect.width-gutterW)/7;
   const relX=clientX-gridRect.left-gutterW;
   const colIndex=Math.max(0,Math.min(6,Math.floor(relX/colW)));
@@ -824,7 +859,6 @@ function getDropTarget(clientX,clientY){
 }
 
 document.addEventListener('mousemove',e=>{
-  /* Resize */
   if(resizeState){
     const delta=e.clientY-resizeState.startY,newDur=Math.max(15,Math.round((resizeState.origDuration+delta*(60/HOUR_H))/5)*5);
     resizeState.block.style.height=Math.max(MIN_BLOCK,newDur*(HOUR_H/60))+'px';
@@ -832,34 +866,28 @@ document.addEventListener('mousemove',e=>{
     if(t){const el=document.getElementById(`wtb-time-${t.id}`);if(el)el.textContent=`${t.startTime} – ${m2t(t2m(t.startTime)+newDur)}${t.cat?' · '+t.cat:''}`;}
     resizeState.cur=newDur;return;
   }
-  /* Drag */
   if(!dragState)return;
   const dx=e.clientX-dragState.startX,dy=e.clientY-dragState.startY;
   if(!dragState.dragging){
     if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
-    // Activate drag
     dragState.dragging=true;
     dragState.block.classList.add('is-dragging');
     document.body.style.cursor='grabbing';
-    // Ghost
     const g=document.createElement('div');
     g.className=`drag-ghost p${dragState.prio}`;
     g.style.width=dragState.block.offsetWidth+'px';
     g.style.height=Math.max(MIN_BLOCK,dragState.duration*(HOUR_H/60))+'px';
     g.innerHTML=`<div class="drag-ghost-title">${esc(dragState.title)}</div><div class="drag-ghost-time">${dragState.origTime}</div>`;
     document.body.appendChild(g);dragState.ghost=g;
-    // Drop indicator
     const ind=document.createElement('div');ind.className='drop-indicator';
     ind.style.height=Math.max(MIN_BLOCK,dragState.duration*(HOUR_H/60))+'px';
     const tl=document.createElement('div');tl.className='drop-label';ind.appendChild(tl);
     dragState.indicator=ind;
   }
-  // Move ghost
   if(dragState.ghost){
     dragState.ghost.style.left=(e.clientX-dragState.block.offsetWidth/2)+'px';
     dragState.ghost.style.top=(e.clientY-dragState.offsetY)+'px';
   }
-  // Drop target
   const tgt=getDropTarget(e.clientX,e.clientY);
   if(tgt){
     const col=document.getElementById('wdc-'+tgt.colIndex);
@@ -875,12 +903,10 @@ document.addEventListener('mousemove',e=>{
 });
 
 document.addEventListener('mouseup',e=>{
-  /* Resize commit */
   if(resizeState){
     if(resizeState.cur){const t=tasks.find(x=>x.id===resizeState.id);if(t){t.duration=resizeState.cur;saveToGist();renderAll();}}
     resizeState=null;document.body.style.cursor='';document.body.style.userSelect='';return;
   }
-  /* Drag commit */
   if(!dragState)return;
   if(dragState.dragging){
     if(dragState.dropTarget){
@@ -892,7 +918,6 @@ document.addEventListener('mouseup',e=>{
     dragState.block.classList.remove('is-dragging');
     renderAll();
   }else{
-    // Short click → edit
     editTask(dragState.id);
   }
   dragState=null;document.body.style.cursor='';document.body.style.userSelect='';
